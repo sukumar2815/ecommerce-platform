@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'en/css/product-details.css' %}">
+{% endblock css %}
+
+{% block body %}
+
+<style>
+   
+
+    .message-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;  /* Changed to right side */
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .message {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateX(120%);  /* Start from the right */
+        transition: transform 0.5s ease, opacity 0.5s ease;
+        opacity: 1;
+    }
+    
+    .message.error {
+        background-color: #f44336;
+    }
+    
+    .message.success {
+        background-color: #4caf50;
+    }
+    
+    .message.slide-in {
+        transform: translateX(0);  /* Slide in to normal position */
+    }
+    
+    .message.fade-out {
+        opacity: 0;
+        transform: translateX(120%);  /* Slide out to the right */
+    }
+    
+    
+    /* Size Selector Wrapper */
+.size-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+/* Label Styling */
+.size-selector label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Dropdown Styling */
+.size-dropdown {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+/* Hover & Focus Effects */
+.size-dropdown:hover,
+.size-dropdown:focus {
+    border-color: #8A2BE2;
+    outline: none;
+}
+
+/* Option Styling */
+.size-dropdown option {
+    font-size: 14px;
+    padding: 10px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+/* Mobile-Friendly */
+@media (max-width: 768px) {
+    .size-dropdown {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+
+</style>    
+
+
+        {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Include this at the bottom of your home.html -->
+        <script>
+            // Wait for the page to load
+            document.addEventListener("DOMContentLoaded", function() {
+                // Select all message divs
+                const messages = document.querySelectorAll('.message');
+                
+                messages.forEach((msg, index) => {
+                    // Slide in animation from right
+                    setTimeout(() => {
+                        msg.classList.add('slide-in');
+                    }, index * 200); // Delay each message slightly
+
+                    // Auto remove after 5 seconds
+                    setTimeout(() => {
+                        msg.classList.add('fade-out');
+                        msg.addEventListener('transitionend', () => {
+                            msg.remove();
+                        });
+                    }, 5000);
+                });
+            });
+        </script>
+
+
+        <!--=====================================
+                    BANNER PART START
+        =======================================-->
+        <section class="single-banner inner-section" style="background: url(images/single-banner.jpg) no-repeat center;">
+            <div class="container">
+                <h2>{{ object.name }}</h2>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/products/brands/{{object.brand.slug}}">{{ object.brand }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                </ol>
+            </div>
+        </section>
+        <!--=====================================
+                    BANNER PART END
+        =======================================-->
+
+
+        <!--=====================================
+                PRODUCT DETAILS PART START
+        =======================================-->
+        <section class="inner-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="details-gallery">
+                            <div class="details-label-group">
+                                <label class="details-label new">{{object.flag}}</label>
+                            </div>
+                            <ul class="details-preview"> 
+                                {% for image in object.product_image.all %}
+                                    <li><img src="{{image.image.url}}" alt="product"></li>
+                                {% endfor %}
+
+                            </ul>
+                            <ul class="details-thumb">
+                                {% for image in object.product_image.all %}
+                                    <li><img src="{{image.image.url}}" alt="product"></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="details-content">
+                            <h3 class="details-name"><a href="#">{{object.name}}</a></h3>
+                            <div class="details-meta">
+                                <p>SKU:<span>{{object.sku}}</span></p>
+                                <p>BRAND:<a href="#">{{object.brand}}</a></p>
+                            </div>
+                            <div class="details-rating">
+                                {% with avg_rating=object.avg_rate|default:0 %}
+                                    {% for i in "12345" %}
+                                        <i class="icofont-star {% if avg_rating >= forloop.counter %}active{% endif %}"></i>
+                                    {% endfor %}
+                                    <a href="#">({{ avg_rating|floatformat:1 }})</a>
+                                {% endwith %}
+                            </div>
+                            <h3 class="details-price">
+                                <span>ksh {{object.price}}</span>
+                            </h3>
+                            {% if object.quantity < 1 %}
+                                <p style="color: red; font-weight: bold;">Out of Stock</p>
+                            {% else %}  
+                                <p style="color: green; font-weight: bold;">{{ object.quantity }} In Stock</p>  
+                            {% endif %}
+
+                            <p class="details-desc">{{object.subtitle}}</p>
+                            <div class="details-list-group">
+                                <label class="details-list-title">tags:</label>
+                                <ul class="details-tag-list">
+                                    {% for tag in object.tags.all %}
+                                        <li><a href="#">{{tag}}</a></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                            </div>
+
+                            <div class="details-list-group">
+                                <label class="details-list-title">Shoe size:</label>
+                                <ul class="details-tag-list">
+                                    {% for size in object.available_sizes.all %}
+                                        <li><a href="#">{{size}}</a></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                            </div>
+
+                            <div class="details-list-group">
+                                <label class="details-list-title">Share:</label>
+                                <ul class="details-share-list">
+                                    <li><a href="#" class="icofont-facebook" title="Facebook"></a></li>
+                                    <li><a href="#" class="icofont-twitter" title="Twitter"></a></li>
+                                    <li><a href="#" class="icofont-linkedin" title="Linkedin"></a></li>
+                                    <li><a href="#" class="icofont-instagram" title="Instagram"></a></li>
+                                </ul>
+                            </div>
+                            <div class="details-add-group">
+                                {% if user.is_authenticated %}
+                                    <form action="{% url 'orders:add_to_cart' %}" method="post">
+                                        {% csrf_token %}
+                                        
+                                        <!-- Shoe Size Selection -->
+                                        <div class="size-selector">
+                                            <label for="size">Select Size:</label>
+                                            <select name="size" required class="size-dropdown">
+                                                <option value="">Choose Size</option>
+                                                {% for size in object.available_sizes.all %}
+                                                    <option value="{{ size }}">{{ size }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <!-- Quantity Selector -->
+                                        <div class="quantity-control" style="display: flex; align-items: center; margin-bottom: 10px;">
+                                            <button type="button" class="quantity-btn minus" style="width: 30px; height: 30px; border: 1px solid #ddd; background: #f8f8f8; cursor: pointer;">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <span class="quantity-display" style="width: 40px; text-align: center; margin: 0 10px;">1</span>
+                                            <input type="hidden" name="quantity" id="quantity-input" value="1">
+                                            <button type="button" class="quantity-btn plus" style="width: 30px; height: 30px; border: 1px solid #ddd; background: #f8f8f8; cursor: pointer;">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Hidden Product ID -->
+                                        <input type="hidden" name="product_id" value="{{ object.id }}" data-quantity="{{ object.quantity }}">
+
+                                        <!-- Add to Cart Button -->
+                                        <button type="submit" class="product-add" title="Add to Cart">
+                                            <i class="fas fa-shopping-basket"></i>
+                                            <span>add to cart</span>
+                                        </button>
+                                    </form>
+
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const minusBtn = document.querySelector('.quantity-btn.minus');
+                                            const plusBtn = document.querySelector('.quantity-btn.plus');
+                                            const quantityDisplay = document.querySelector('.quantity-display');
+                                            const quantityInput = document.querySelector('#quantity-input');
+                                            const maxQuantity = parseInt(document.querySelector('[name="product_id"]').dataset.quantity) || 1; // Get stock quantity
+                                            
+                                            const MIN_QUANTITY = 1;
+
+                                            minusBtn.addEventListener('click', function() {
+                                                let currentValue = parseInt(quantityDisplay.textContent);
+                                                if (currentValue > MIN_QUANTITY) {
+                                                    currentValue--;
+                                                    quantityDisplay.textContent = currentValue;
+                                                    quantityInput.value = currentValue;
+                                                }
+                                            });
+
+                                            plusBtn.addEventListener('click', function() {
+                                                let currentValue = parseInt(quantityDisplay.textContent);
+                                                if (currentValue < maxQuantity) {
+                                                    currentValue++;
+                                                    quantityDisplay.textContent = currentValue;
+                                                    quantityInput.value = currentValue;
+                                                } else {
+                                                    showNotification(`Only ${maxQuantity} items available in stock`, 'warning');
+                                                }
+                                            });
+
+                                            function showNotification(message, type = 'warning') {
+                                                const notification = document.createElement('div');
+                                                notification.className = `notification ${type}`;
+                                                notification.textContent = message;
+
+                                                Object.assign(notification.style, {
+                                                    position: 'fixed',
+                                                    top: '20px',
+                                                    right: '20px',
+                                                    padding: '15px 25px',
+                                                    background: type === 'success' ? '#4CAF50' : '#f44336',
+                                                    color: 'white',
+                                                    borderRadius: '4px',
+                                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                                    zIndex: '1000'
+                                                });
+
+                                                document.body.appendChild(notification);
+
+                                                setTimeout(() => {
+                                                    notification.remove();
+                                                }, 3000);
+                                            }
+                                        });
+                                    </script>
+                                {% else %}
+                                    <p>You must be logged in to add items to your cart. 
+                                        <a href="{% url 'accounts:login' %}?next={{ request.path }}">Login here</a>
+                                    </p>
+                                {% endif %}
+
+                            </div>
+                            
+                            <div class="details-action-group">
+                                <a class="details-wish wish" href="/products" title="Add Your Wishlist">
+                                    <i class="icofont-cart-alt"></i>
+                                    <span>Continue Shopping</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!--=====================================
+                PRODUCT DETAILS PART END
+        =======================================-->
+
+
+        <!--=====================================
+                  PRODUCT TAB PART START
+        =======================================-->
+        <section class="inner-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="product-details-frame">
+                            <h3 class="frame-title">Description</h3>
+                            <div class="tab-descrip">
+                                <p>{{object.description}}</p>
+                            </div>
+                        </div>
+                        <div class="product-details-frame" id="all-reviews">
+                            {% include "include/reviews_include.html" %}
+                        </div>
+                        <div class="product-details-frame">
+                            <h3 class="frame-title">add your review</h3>
+                            <form id="review-form" class="review-form" method="post" action="{% url 'product:add-review' object.slug %}">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="star-rating">
+                                            <input type="radio" name="rate" value=5 id="star-1"><label for="star-1"></label>
+                                            <input type="radio" name="rate" value=4 id="star-2"><label for="star-2"></label>
+                                            <input type="radio" name="rate" value=3 id="star-3"><label for="star-3"></label>
+                                            <input type="radio" name="rate" value=2 id="star-4"><label for="star-4"></label>
+                                            <input type="radio" name="rate" value=1 id="star-5"><label for="star-5"></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="form-group">
+                                            <textarea class="form-control" name="review" placeholder="Describe"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-lg-12">
+                                        {% if user.is_authenticated %}
+                                        <button type="submit" class="btn btn-inline">
+                                            <i class="icofont-water-drop"></i>
+                                            <span>drop your review</span>
+                                        </button>
+                                        {% else %}
+                                        <p>You must be Login first.<a href="{% url 'accounts:login' %}?next={{ request.path }}">Login here</a></p>
+                                        {% endif %}
+                                    </div>
+
+
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!--=====================================
+                    PRODUCT TAB PART END
+        =======================================-->
+
+
+        <!--=====================================
+                 PRODUCT RELATED PART START
+        =======================================-->
+        <section class="inner-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <div class="section-heading">
+                            <h2>related this items</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5">
+                   {% for item in related_products %}
+                        <div class="col">
+                            <div class="product-card {% if item.quantity == 0 %} product-disable {% endif %}">
+                                <div class="product-media">
+                                    <div class="product-label">
+                                        <label class="label-text sale">{{item.flag}}</label>
+                                    </div>
+                                    <button class="product-wish wish">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    <a class="product-image" href="{% url 'product:product-detail' item.slug %}">
+                                        <img src="{{item.image.url}}" alt="product">
+                                    </a>
+                                    
+                                </div>
+                                <div class="product-content">
+                                    <div class="product-rating">
+                                        {% with avg_rating=item.avg_rate|default:0 %}
+                                            {% for i in "12345" %}
+                                                <i class="icofont-star {% if avg_rating >= forloop.counter %}active{% endif %}"></i>
+                                            {% endfor %}
+                                            <a href="{% url 'product:product-detail' item.slug %}">({{ avg_rating|floatformat:1 }})</a>
+                                        {% endwith %}
+                                    </div>
+                                    <h6 class="product-name">
+                                        <a href="{% url 'product:product-detail' item.slug %}">{{item.name}}</a>
+                                    </h6>
+                                    <h6 class="product-price">
+                                        <span>ksh {{item.price}}</span>
+                                    </h6>
+                                    <a href="{% url 'product:product-detail' item.slug %}" class="product-add btn">
+                                        <i class="fas fa-shopping-basket"></i>
+                                        <span>View Product</span>
+                                    </a>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                   {% endfor %}
+                   
+                
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="section-btn-25">
+                            <a href="/products" class="btn btn-outline">
+                                <i class="fas fa-eye"></i>
+                                <span>view all related</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+
+        <script>
+            $(document).ready(function(e){
+
+                $(document).on('submit','#review-form',function(e){
+                    e.preventDefault(); // refresh
+
+                    $.ajax({
+                        type: $(this).attr('method') ,
+                        url:  $(this).attr('action'),
+                        data: $(this).serialize(),
+                        dataType: 'json',
+                        success:function(response){
+                            $('#all-reviews').html(response['result'])
+                            $('#review-form').trigger('reset');
+                        },
+                        error:function(){
+
+                        }
+                    })
+                })
+            })
+        </script>
+
+
+{% endblock body %}
